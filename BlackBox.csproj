@@ -9,7 +9,6 @@
 
     <ItemGroup>
       <Folder Include="Files\Userspace\" />
-      <Folder Include="System\Peripherals\" />
       <Folder Include="Docs\" />
       <None Update="JetBrainsMono-Regular.ttf">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -37,14 +37,15 @@ public static class Sandbox
 				typeof(Console).Assembly,                   // System.Console
 				typeof(IEnumerable<>).Assembly,            // System.Collections.Generic
 				typeof(Enumerable).Assembly,                // System.Linq
-				typeof(BlackBox.System.Serial).Assembly     // BlackBox.System namespace
+				typeof(Terminal).Assembly     // BlackBox.System namespace
 			)
 			.WithImports(
-				"System",
+				"System", //todo: reimplement important system types or selectively import
 				"System.Collections.Generic",
 				"System.Linq",
-				"System.Text",
-				"BlackBox.System"                           // Import BlackBox.System namespace
+				"System.Text", //this should also possibly be excluded
+				"BlackBox.System",
+				"BlackBox.System.Peripherals"
 			)
 			.WithAllowUnsafe(false)                        // Disable unsafe code
 			.WithCheckOverflow(true);                       // Enable overflow checking
