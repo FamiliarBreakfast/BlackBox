@@ -8,14 +8,23 @@ public class Terminal
 	public int Width { get; private set; }
 	public int Height { get; private set; }
 
+	// Scrollback buffer
+	private const int ScrollbackLines = 1000;
+	private const int TotalBufferLines = ScrollbackLines;
+
 	private char[,] _buffer;
 	private (byte r, byte g, byte b)[,] _fgColors;
 	private (byte r, byte g, byte b)[,] _bgColors;
 
 	private int _cursorX;
-	private int _cursorY;
+	private int _cursorY; // Cursor position in buffer (not screen)
 	public int CursorX => _cursorX;
 	public int CursorY => _cursorY;
+
+	// Viewport control
+	private int _viewportOffset; // Line offset for scrolling
+	private int _contentLines; // Actual lines with content
+	public int ViewportOffset => _viewportOffset;
 
 	// Default colors
 	private (byte r, byte g, byte b) _defaultFg = (200, 200, 200);
@@ -27,9 +36,9 @@ public class Terminal
 	{
 		Width = width;
 		Height = height;
-		_buffer = new char[height, width];
-		_fgColors = new (byte, byte, byte)[height, width];
-		_bgColors = new (byte, byte, byte)[height, width];
+		_buffer = new char[TotalBufferLines, width];
+		_fgColors = new (byte, byte, byte)[TotalBufferLines, width];
+		_bgColors = new (byte, byte, byte)[TotalBufferLines, width];
 		_currentFg = _defaultFg;
 		_currentBg = _defaultBg;
 		Clear();
@@ -37,7 +46,7 @@ public class Terminal
 
 	public void Clear()
 	{
-		for (int y = 0; y < Height; y++)
+		for (int y = 0; y < TotalBufferLines; y++)
 		{
 			for (int x = 0; x < Width; x++)
 			{
@@ -48,14 +57,22 @@ public class Terminal
 		}
 		_cursorX = 0;
 		_cursorY = 0;
+		_viewportOffset = 0;
+		_contentLines = 0;
 	}
 
 	public void Write(string text)
 	{
+		// Auto-scroll to cursor when writing
+		ScrollToBottom();
+
 		foreach (char c in text)
 		{
 			WriteChar(c);
 		}
+
+		// Track maximum content lines
+		_contentLines = Math.Max(_contentLines, _cursorY + 1);
 	}
 
 	private void WriteChar(char c)
@@ -65,10 +82,10 @@ public class Terminal
 			case '\n':
 				_cursorX = 0;
 				_cursorY++;
-				if (_cursorY >= Height)
+				if (_cursorY >= TotalBufferLines)
 				{
 					ScrollUp();
-					_cursorY = Height - 1;
+					_cursorY = TotalBufferLines - 1;
 				}
 				break;
 
@@ -82,10 +99,10 @@ public class Terminal
 				{
 					_cursorX = 0;
 					_cursorY++;
-					if (_cursorY >= Height)
+					if (_cursorY >= TotalBufferLines)
 					{
 						ScrollUp();
-						_cursorY = Height - 1;
+						_cursorY = TotalBufferLines - 1;
 					}
 				}
 				break;
@@ -95,10 +112,10 @@ public class Terminal
 				{
 					_cursorX = 0;
 					_cursorY++;
-					if (_cursorY >= Height)
+					if (_cursorY >= TotalBufferLines)
 					{
 						ScrollUp();
-						_cursorY = Height - 1;
+						_cursorY = TotalBufferLines - 1;
 					}
 				}
 
@@ -112,7 +129,8 @@ public class Terminal
 
 	private void ScrollUp()
 	{
-		for (int y = 0; y < Height - 1; y++)
+		// Shift entire buffer up by one line
+		for (int y = 0; y < TotalBufferLines - 1; y++)
 		{
 			for (int x = 0; x < Width; x++)
 			{
@@ -125,10 +143,55 @@ public class Terminal
 		// Clear last line
 		for (int x = 0; x < Width; x++)
 		{
-			_buffer[Height - 1, x] = ' ';
-			_fgColors[Height - 1, x] = _defaultFg;
-			_bgColors[Height - 1, x] = _defaultBg;
+			_buffer[TotalBufferLines - 1, x] = ' ';
+			_fgColors[TotalBufferLines - 1, x] = _defaultFg;
+			_bgColors[TotalBufferLines - 1, x] = _defaultBg;
 		}
+
+		// Adjust cursor and viewport
+		if (_cursorY > 0)
+			_cursorY--;
+		if (_viewportOffset > 0)
+			_viewportOffset--;
+		if (_contentLines > 0)
+			_contentLines--;
+	}
+
+	/// <summary>
+	/// Scroll viewport up by one page (Height - 1 lines)
+	/// </summary>
+	public void PageUp()
+	{
+		int scrollAmount = Height - 1;
+		_viewportOffset = Math.Max(0, _viewportOffset - scrollAmount);
+	}
+
+	/// <summary>
+	/// Scroll viewport down by one page (Height - 1 lines)
+	/// </summary>
+	public void PageDown()
+	{
+		int scrollAmount = Height - 1;
+		int maxOffset = Math.Max(0, _contentLines - Height);
+		_viewportOffset = Math.Min(maxOffset, _viewportOffset + scrollAmount);
+	}
+
+	/// <summary>
+	/// Scroll viewport to show cursor (bottom of buffer)
+	/// </summary>
+	public void ScrollToBottom()
+	{
+		int maxOffset = Math.Max(0, _contentLines - Height);
+		_viewportOffset = maxOffset;
+	}
+
+	/// <summary>
+	/// Check if viewport is at the bottom (following cursor)
+	/// </summary>
+	public bool IsAtBottom()
+	{
+		int maxOffset = Math.Max(0, _contentLines - Height);
+		return _viewportOffset >= maxOffset;
 	}
 
 	public void SetCursorPosition(int x, int y)
@@ -155,22 +218,25 @@ public class Terminal
 
 	public char GetChar(int x, int y)
 	{
-		if (x < 0 || x >= Width || y < 0 || y >= Height)
+		int bufferY = y + _viewportOffset;
+		if (x < 0 || x >= Width || y < 0 || y >= Height || bufferY >= TotalBufferLines)
 			return ' ';
-		return _buffer[y, x];
+		return _buffer[bufferY, x];
 	}
 
 	public (byte r, byte g, byte b) GetForegroundColor(int x, int y)
 	{
-		if (x < 0 || x >= Width || y < 0 || y >= Height)
+		int bufferY = y + _viewportOffset;
+		if (x < 0 || x >= Width || y < 0 || y >= Height || bufferY >= TotalBufferLines)
 			return _defaultFg;
-		return _fgColors[y, x];
+		return _fgColors[bufferY, x];
 	}
 
 	public (byte r, byte g, byte b) GetBackgroundColor(int x, int y)
 	{
-		if (x < 0 || x >= Width || y < 0 || y >= Height)
+		int bufferY = y + _viewportOffset;
+		if (x < 0 || x >= Width || y < 0 || y >= Height || bufferY >= TotalBufferLines)
 			return _defaultBg;
-		return _bgColors[y, x];
+		return _bgColors[bufferY, x];
 	}
 }

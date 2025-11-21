@@ -1,190 +1,30 @@
 # System Layer
 
-The System layer contains userspace-accessible APIs and syscalls. This is the boundary between sandboxed user code and the host system.
+Userspace-accessible APIs. Auto-imported via `BlackBox.System` namespace.
 
 ## Components
 
-### [Window](WINDOW.md) - `Window.cs` (root - hostspace)
-Raylib-based terminal window with shader support:
-- Hardware-accelerated rendering
-- Post-processing shader effects
-- Terminal display management
-- **Note:** Hostspace component at root level
+| Component | File | Status |
+|-----------|------|--------|
+| [Window](WINDOW.md) | `Window.cs` (root, hostspace) | ✅ Complete |
+| [Terminal](TERMINAL.md) | `System/Terminal.cs` | ✅ Complete |
+| [Serial](SERIAL.md) | `System/Serial.cs` | ✅ Complete |
+| [IO](IO.md) | `System/IO.cs` | 🚧 Placeholder |
+| [Process](PROCESS.md) | `System/Process.cs` | 🚧 Placeholder |
+| [Filesystem](Filesystem/FILESYSTEM.md) | `System/Filesystem/` | 🚧 Placeholder |
+| [Peripherals](Peripherals/PERIPHERALS.md) | `System/Peripherals/` | 🚧 Placeholder |
 
-**Status:** ✅ Complete
-
-### [Terminal](TERMINAL.md) - `System/Terminal.cs` (userspace)
-Terminal API for userspace code:
-- Write to terminal window
-- Color and cursor control
-- Terminal buffer access
-- **Note:** Has companion hostspace class at `Terminal.cs` (root)
-
-**Status:** ✅ Complete
-
-### [Serial](SERIAL.md) - `System/Serial.cs`
-Low-level serial console for debugging and output:
-- Direct terminal write access
-- Console buffer management
-- Primary debugging interface
-
-**Status:** ✅ Complete
-
-### [IO](IO.md) - `System/IO.cs`
-Userspace shell functions and I/O operations:
-- Input/output operations
-- Shell utilities accessible from userspace
-
-**Status:** 🚧 Placeholder
-
-### [Process](PROCESS.md) - `System/Process.cs`
-Process management functions:
-- Process creation and termination
-- Process information and control
-- Inter-process communication
-
-**Status:** 🚧 Placeholder
-
-### [Filesystem](Filesystem/FILESYSTEM.md) - `System/Filesystem/`
-Virtual filesystem operations:
-- File and directory operations
-- Path management
-- Virtual file storage
-
-**Status:** 🚧 Placeholder
-
-### [Peripherals](Peripherals/PERIPHERALS.md) - `System/Peripherals/`
-Device interface management:
-- Peripheral device access
-- Device I/O operations
-
-**Status:** 🚧 Placeholder
-
----
-
-## Architecture
-
-The System layer is automatically accessible from all sandboxed code through the `BlackBox.System` namespace.
-
-```
-┌────────────────────────────────────┐
-│         Userspace Code             │
-│  (Running in Sandbox)              │
-│                                    │
-│  Can directly access:              │
-│  - Terminal.Write() → Window       │
-│  - Serial.Write() → stdout         │
-│  - IO functions                    │
-│  - Process management              │
-│  - Filesystem operations           │
-│  - Peripheral devices              │
-└────────────────────────────────────┘
-                │
-                ▼
-┌────────────────────────────────────┐
-│      BlackBox.System Namespace     │
-│                                    │
-│  ┌──────────────────────────────┐  │
-│  │  Terminal (userspace)        │  │
-│  │  - Write(string) → Window    │  │
-│  │  - Color/cursor control      │  │
-│  └──────────────────────────────┘  │
-│                                    │
-│  ┌──────────────────────────────┐  │
-│  │  Serial (debugging)          │  │
-│  │  - Write(string) → stdout    │  │
-│  │  - Read()                    │  │
-│  └──────────────────────────────┘  │
-│                                    │
-│  ┌──────────────────────────────┐  │
-│  │  IO                          │  │
-│  │  - Input/output operations   │  │
-│  └──────────────────────────────┘  │
-│                                    │
-│  ┌──────────────────────────────┐  │
-│  │  Process                     │  │
-│  │  - Process management        │  │
-│  └──────────────────────────────┘  │
-│                                    │
-│  ┌──────────────────────────────┐  │
-│  │  Filesystem                  │  │
-│  │  - Virtual file operations   │  │
-│  └──────────────────────────────┘  │
-└────────────────────────────────────┘
-                │
-                ▼
-┌────────────────────────────────────┐
-│      Sandbox (Hostspace)           │
-│  Security boundary and enforcement │
-└────────────────────────────────────┘
-```
-
-## Automatic Namespace Import
-
-The `BlackBox.System` namespace is automatically imported in the Sandbox, so userspace code can directly use:
+## Usage from Userspace
 
 ```csharp
-// No need for: using BlackBox.System;
-
-Terminal.Write("Hello World\n");  // Write to terminal window
-Serial.Write("Debug info\n");     // Write to stdout for debugging
+// No import needed - BlackBox.System is auto-imported
+Terminal.Write("Hello\n");
+Serial.Write("Debug\n");
 var files = Filesystem.List("/");
-var pid = Process.Spawn("program.cs");
+int pid = Process.Spawn("code");
 ```
 
 ## Security Model
 
-### What Userspace Can Do
-- Call System layer APIs
-- Access virtual filesystem
-- Spawn and manage processes
-- Write to serial console
-- Use peripheral devices (through APIs)
-
-### What Userspace Cannot Do
-- Access host filesystem directly
-- Call arbitrary .NET APIs
-- Use unsafe code
-- Access Machine layer (Host, Sandbox internals)
-- Break out of sandbox
-
-## Creating New System APIs
-
-To add a new userspace API:
-
-1. Create the class in `System/` namespace
-2. The Sandbox automatically includes all `BlackBox.System` types
-3. No additional configuration needed
-
-Example:
-
-```csharp
-// System/Network.cs
-namespace BlackBox.System;
-
-public class Network
-{
-    public static void Connect(string address)
-    {
-        // Implementation
-    }
-}
-
-// Automatically accessible from userspace:
-// Network.Connect("192.168.1.1");
-```
-
-## Component Status
-
-| Component | File | Status |
-|-----------|------|--------|
-| Serial | `Serial.cs` | ✅ Complete |
-| IO | `IO.cs` | 🚧 Placeholder |
-| Process | `Process.cs` | 🚧 Placeholder |
-| Filesystem | `Filesystem/Filesystem.cs` | 🚧 Placeholder |
-| Peripherals | `Peripherals/` | 🚧 Placeholder |
-
-## See Also
-
-- [Sandbox](../Machine/SANDBOX.md) - Executes userspace code
-- [Machine Layer](../Machine/MACHINE.md) - Hostspace components
+**Can:** Use System APIs, access virtual filesystem, spawn processes
+**Cannot:** Access host filesystem, use unsafe code, access Machine layer

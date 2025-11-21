@@ -1,4 +1,4 @@
-namespace BlackBox.System.Filesystem;
+namespace BlackBox.System;
 
 //virtual filesystem functions
 
