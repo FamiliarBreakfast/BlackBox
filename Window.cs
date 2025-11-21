@@ -89,6 +89,37 @@ public static class Window
 		Raylib.ClearBackground(Color.Black);
 	}
 
+	public static void ProcessScrolling()
+	{
+		if (_terminal == null) return;
+
+		// Check for PageUp/PageDown keys
+		if (Raylib.IsKeyPressed(Raylib_cs.KeyboardKey.PageUp))
+		{
+			_terminal.PageUp();
+		}
+		else if (Raylib.IsKeyPressed(Raylib_cs.KeyboardKey.PageDown))
+		{
+			_terminal.PageDown();
+		}
+
+		// Check for Ctrl+Up/Ctrl+Down
+		bool ctrlPressed = Raylib.IsKeyDown(Raylib_cs.KeyboardKey.LeftControl) ||
+		                   Raylib.IsKeyDown(Raylib_cs.KeyboardKey.RightControl);
+
+		if (ctrlPressed)
+		{
+			if (Raylib.IsKeyPressed(Raylib_cs.KeyboardKey.Up))
+			{
+				_terminal.PageUp();
+			}
+			else if (Raylib.IsKeyPressed(Raylib_cs.KeyboardKey.Down))
+			{
+				_terminal.PageDown();
+			}
+		}
+	}
+
 	public static void Render()
 	{
 		if (_terminal == null) return;
@@ -121,7 +152,7 @@ public static class Window
 			}
 		}
 
-		// Draw cursor
+		// Draw cursor (only if visible in viewport)
 		_cursorBlinkTime += Raylib.GetFrameTime();
 		if (_cursorBlinkTime >= _cursorBlinkRate)
 		{
@@ -131,9 +162,15 @@ public static class Window
 
 		if (_showCursor)
 		{
-			int cursorX = _terminal.CursorX * _charWidth;
-			int cursorY = _terminal.CursorY * _charHeight;
-			Raylib.DrawRectangle(cursorX, cursorY, _charWidth, 2, Color.White);
+			int cursorScreenY = _terminal.CursorY - _terminal.ViewportOffset;
+
+			// Only draw cursor if it's within the visible viewport
+			if (cursorScreenY >= 0 && cursorScreenY < _terminal.Height)
+			{
+				int cursorX = _terminal.CursorX * _charWidth;
+				int cursorY = (cursorScreenY + 1) * _charHeight - 5;
+				Raylib.DrawRectangle(cursorX, cursorY, _charWidth, 2, Color.White);
+			}
 		}
 
 		Raylib.EndTextureMode();

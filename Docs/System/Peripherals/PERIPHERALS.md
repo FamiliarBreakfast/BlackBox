@@ -1,277 +1,65 @@
 # Peripherals
 
-**Location:** `System/Peripherals/`
-**Namespace:** `BlackBox.System.Peripherals`
-**Status:** 🚧 Placeholder
+**`System/Peripherals/`** | `BlackBox.System.Peripherals` | 🚧 Placeholder
 
-## Overview
+Virtual device interfaces for userspace.
 
-Peripherals provides interfaces for virtual device access from userspace. This allows user code to interact with emulated hardware devices.
-
-## Current Implementation
-
-Currently empty directory - placeholder for future peripheral implementations.
-
-## Planned Architecture
-
-Each peripheral type will have its own class:
+## Planned Components
 
 ```
 System/Peripherals/
-├── Keyboard.cs        # Keyboard input
-├── Mouse.cs           # Mouse input
-├── Display.cs         # Display/graphics output
-├── Timer.cs           # Hardware timers
-├── Network.cs         # Network interface
-├── Storage.cs         # Storage devices
-└── Audio.cs           # Audio output
+├── Keyboard.cs     # Keyboard input
+├── Mouse.cs        # Mouse input
+├── Display.cs      # Graphics output
+├── Timer.cs        # Hardware timers
+├── Network.cs      # Network interface
+├── Storage.cs      # Storage devices
+└── Audio.cs        # Audio output
 ```
 
-## Planned Peripherals
+## Example APIs
 
 ### Keyboard
-
 ```csharp
-namespace BlackBox.System.Peripherals;
-
-public static class Keyboard
-{
-    // Check if key is pressed
-    public static bool IsKeyDown(Key key);
-
-    // Get next key event
-    public static KeyEvent? GetKeyEvent();
-
-    // Wait for key press
-    public static Key WaitForKey();
-}
-```
-
-### Mouse
-
-```csharp
-public static class Mouse
-{
-    // Get mouse position
-    public static Point Position { get; }
-
-    // Check button state
-    public static bool IsButtonDown(MouseButton button);
-
-    // Get next mouse event
-    public static MouseEvent? GetMouseEvent();
-}
+bool IsKeyDown(Key key)
+KeyEvent? GetKeyEvent()
+Key WaitForKey()
 ```
 
 ### Display
-
 ```csharp
-public static class Display
-{
-    // Display dimensions
-    public static int Width { get; }
-    public static int Height { get; }
-
-    // Set pixel
-    public static void SetPixel(int x, int y, Color color);
-
-    // Get pixel
-    public static Color GetPixel(int x, int y);
-
-    // Clear screen
-    public static void Clear(Color color);
-
-    // Draw primitives
-    public static void DrawLine(Point p1, Point p2, Color color);
-    public static void DrawRect(Rectangle rect, Color color);
-
-    // Update display
-    public static void Refresh();
-}
+int Width { get; } int Height { get; }
+SetPixel(int x, int y, Color color)
+Color GetPixel(int x, int y)
+Clear(Color color)
+DrawLine(Point p1, Point p2, Color color)
+Refresh()
 ```
 
 ### Timer
-
 ```csharp
-public static class Timer
-{
-    // Get current tick count
-    public static long Ticks { get; }
-
-    // Create timer
-    public static int Create(TimeSpan interval, Action callback);
-
-    // Cancel timer
-    public static void Cancel(int timerId);
-
-    // Sleep
-    public static void Sleep(TimeSpan duration);
-}
+long Ticks { get; }
+int Create(TimeSpan interval, Action callback)
+Cancel(int timerId)
+Sleep(TimeSpan duration)
 ```
 
 ### Network
-
 ```csharp
-public static class Network
-{
-    // Create connection
-    public static int Connect(string address, int port);
-
-    // Send data
-    public static void Send(int connectionId, byte[] data);
-
-    // Receive data
-    public static byte[]? Receive(int connectionId);
-
-    // Close connection
-    public static void Close(int connectionId);
-}
+int Connect(string address, int port)
+Send(int connId, byte[] data)
+byte[]? Receive(int connId)
+Close(int connId)
 ```
 
-## Usage Examples
-
-### Keyboard Input
-
-```csharp
-// Check key state
-if (Keyboard.IsKeyDown(Key.Enter))
-{
-    Serial.Write("Enter pressed\n");
-}
-
-// Wait for input
-var key = Keyboard.WaitForKey();
-Serial.Write($"Key pressed: {key}\n");
-```
-
-### Display Graphics
-
-```csharp
-// Clear screen to black
-Display.Clear(Color.Black);
-
-// Draw red rectangle
-Display.DrawRect(new Rectangle(10, 10, 100, 50), Color.Red);
-
-// Set individual pixels
-for (int x = 0; x < Display.Width; x++)
-{
-    Display.SetPixel(x, 100, Color.White);
-}
-
-// Update display
-Display.Refresh();
-```
-
-### Timer Events
-
-```csharp
-// Create repeating timer
-var timerId = Timer.Create(TimeSpan.FromSeconds(1), () =>
-{
-    Serial.Write($"Tick: {DateTime.Now}\n");
-});
-
-// Cancel after 10 seconds
-Timer.Sleep(TimeSpan.FromSeconds(10));
-Timer.Cancel(timerId);
-```
-
-### Network Communication
-
-```csharp
-// Connect to server
-int conn = Network.Connect("192.168.1.100", 8080);
-
-// Send data
-var data = Encoding.UTF8.GetBytes("Hello Server");
-Network.Send(conn, data);
-
-// Receive response
-var response = Network.Receive(conn);
-if (response != null)
-{
-    var text = Encoding.UTF8.GetString(response);
-    Serial.Write($"Received: {text}\n");
-}
-
-// Close connection
-Network.Close(conn);
-```
-
-## Event-Driven Model
-
-Peripherals will support event-driven programming:
-
-```csharp
-// Register event handlers
-Keyboard.OnKeyDown += (key) =>
-{
-    Serial.Write($"Key down: {key}\n");
-};
-
-Mouse.OnClick += (point, button) =>
-{
-    Serial.Write($"Click at {point.X},{point.Y}\n");
-};
-
-// Events are processed in main loop
-```
-
-## Peripheral Types
-
-### Input Devices
-- Keyboard
-- Mouse
-- Gamepad (future)
-- Touch screen (future)
-
-### Output Devices
-- Display
-- Serial (already implemented)
-- Audio
-- Storage
-
-### Communication
-- Network
-- Serial ports
-- USB (future)
-
-### Timing
-- Timers
-- Real-time clock
-
-## Integration with Host
-
-Peripherals bridge userspace and hostspace:
+## Architecture
 
 ```
-┌──────────────────────────┐
-│   Userspace Code         │
-│   Keyboard.IsKeyDown()   │
-└──────────┬───────────────┘
-           │
-┌──────────▼───────────────┐
-│   System.Peripherals     │
-│   Keyboard API           │
-└──────────┬───────────────┘
-           │
-┌──────────▼───────────────┐
-│   Host                   │
-│   Physical device        │
-│   or emulation           │
-└──────────────────────────┘
+Userspace → System.Peripherals → Host → Physical/Emulated Device
 ```
 
-## Emulation vs Real Hardware
-
-Peripherals can be:
-- **Emulated** - Software simulation of hardware
-- **Pass-through** - Direct access to real hardware (with sandboxing)
-- **Hybrid** - Mix of both
+Peripherals can be emulated (software), pass-through (real hardware), or hybrid.
 
 ## See Also
 
-- [System Layer](../SYSTEM.md) - Overview of userspace APIs
-- [Host](../../Machine/HOST.md) - Peripheral management
-- [Serial](../SERIAL.md) - Serial console (a type of peripheral)
+[System Layer](../SYSTEM.md) | [Host](../../Machine/HOST.md)
