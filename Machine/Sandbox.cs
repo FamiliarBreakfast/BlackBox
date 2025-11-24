@@ -35,18 +35,14 @@ public static class Sandbox
 
 		// Initialize Roslyn scripting environment with security restrictions
 		scriptOptions = ScriptOptions.Default
-			.AddReferences(assemblyBuilder.GetReferences())  // All runtime assemblies except System.IO
-			.AddReferences(typeof(Terminal).Assembly)         // BlackBox.System namespace
+			.AddReferences(assemblyBuilder.GetReferences())  // Modified base assemblies
 			.WithImports(
 				"System",
 				"System.Collections.Generic",
 				"System.Linq",
 				"System.Text"
-				//"System.Peripherals"
-				//"BlackBox.System",
-				//"BlackBox.System.Peripherals"
 			)
-			.WithAllowUnsafe(false)                        // Disable unsafe code
+			.WithAllowUnsafe(false)                         // Disable unsafe code
 			.WithCheckOverflow(true);                       // Enable overflow checking
 	}
 

@@ -11,13 +11,14 @@ public class SandboxAssemblyBuilder {
 
 		// Add core assemblies for basic types
 		foreach (var asm in runtimeAssemblies) {
+			// Skip SYSTEM assemblies
 			var isSystemAssembly = asm.FullName?.StartsWith("System.") == true ||
 			                       asm.FullName?.StartsWith("Microsoft.") == true;
-
-			// Skip ONLY system assemblies that contain System.IO types
-			// Keep user assemblies (like BlackBox) even if they have System.IO types
+			
 			if (isSystemAssembly && asm.GetTypes().Any(t => t.Namespace == "System.IO"))
 				continue;
+			
+			// any further requirements go here
 
 			references.Add(MetadataReference.CreateFromFile(asm.Location));
 		}

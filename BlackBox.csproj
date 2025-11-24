@@ -15,14 +15,8 @@
         <None Update="OFL.txt">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="Files\System\DataTest\__DataTest">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <None Update="Files\System\__System">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-        <Compile Remove="Files\System\ShellRC.cs\__ShellRC.cs" />
-        <None Include="Files\System\ShellRC.cs\__ShellRC.cs">
+        <Compile Remove="Files\**\*.cs" />
+        <None Include="Files\**\*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

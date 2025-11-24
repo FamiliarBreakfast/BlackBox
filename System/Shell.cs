@@ -1,6 +1,6 @@
 using System.Reflection;
-using Sandbox = global::BlackBox.Machine.Sandbox;
-using Window = global::BlackBox.Window;
+using Sandbox = BlackBox.Machine.Sandbox;
+using Window = BlackBox.Window;
 using Path = System.IO.Path;
 
 namespace System;
@@ -164,6 +164,23 @@ public static class Shell
 		}
 	}
 	
+	public static void Evaluate(string code)
+	{
+		var result = Sandbox.Execute(code);
+
+		if (result.Success)
+		{
+			if (result.ReturnValue != null)
+			{
+				Window.Terminal.Write($"=> {result.ReturnValue}\n");
+			}
+		}
+		else
+		{
+			Window.Terminal.Write($"Error: {result.ErrorMessage}\n");
+		}
+	}
+	
 	//File operations
 	public static void Read(string path)
 	{
@@ -190,4 +207,18 @@ public static class Shell
 			Window.Terminal.Write($"Error: {result.ErrorMessage}\n");
 		}
 	}
+	
+	public static void List(string path)
+	{
+		//list files
+	}
+
+	public static void Touch(string path)
+	{
+		//initialize file
+	}
+	
+	//Move()
+	//Copy()
+	
 }
