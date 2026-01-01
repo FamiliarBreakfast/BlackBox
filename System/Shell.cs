@@ -30,8 +30,8 @@ public static class Shell
 		return type.Name;
 	}
 	
-	// filter: "custom" = just user types, "system" = namespace list, "all" = all classes
-	public static void Help(string className = "", string show = "custom")
+	// show: "custom" = just user types, "system" = namespace list, "all" = all classes
+	public static void Help(string className = "", string show = "custom") //todo: fix getting from excluded system assemblies in some cases
 	{
 		if (className == "")
 		{
